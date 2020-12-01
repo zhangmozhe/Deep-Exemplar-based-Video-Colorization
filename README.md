@@ -43,7 +43,7 @@ In order to colorize your own video, it requires to extract the video frames, an
 - Place your video frames into one folder, _e.g._, `./sample_videos/v32_180`
 - Place your reference images into another folder, _e.g._, `./sample_videos/v32`
 
-If you want to _automatically_ retrieve color images, you can try the retrieval algorithm from \[[1](https://github.com/hmmlillian/Gray-Image-Retrieval)\] which will retrieve similar images from the ImageNet dataset. Or you can try [this link](https://github.com/pochih/CBIR) on your own image database.
+If you want to _automatically_ retrieve color images, you can try the retrieval algorithm from [this link](https://github.com/hmmlillian/Gray-Image-Retrieval) which will retrieve similar images from the ImageNet dataset. Or you can try [this link](https://github.com/pochih/CBIR) on your own image database.
 
 ## Test
 
