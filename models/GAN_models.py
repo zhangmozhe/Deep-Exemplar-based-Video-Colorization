@@ -81,11 +81,11 @@ class Self_Attention(nn.Module):
 
     def forward(self, x):
         """
-            inputs :
-                x : input feature maps( B X C X W X H)
-            returns :
-                out : self attention value + input feature 
-                attention: B X N X N (N is Width*Height)
+        inputs :
+            x : input feature maps( B X C X W X H)
+        returns :
+            out : self attention value + input feature
+            attention: B X N X N (N is Width*Height)
         """
         m_batchsize, C, width, height = x.size()
         proj_query = self.query_conv(x).view(m_batchsize, -1, width * height).permute(0, 2, 1)  # B X CX(N)
@@ -98,13 +98,12 @@ class Self_Attention(nn.Module):
         out = out.view(m_batchsize, C, width, height)
 
         out = self.gamma * out + x
-        # return out, attention
         return out
 
 
 class Discriminator_WITHOUT_FC_x64_video(nn.Module):
     """
-        Discriminative Network
+    Discriminative Network
     """
 
     def __init__(self, in_size=6, ndf=64):
@@ -137,18 +136,7 @@ class Discriminator_WITHOUT_FC_x64_video(nn.Module):
             nn.LeakyReLU(0.2, inplace=True),
         )
 
-        # sate size: (ndf * 8) x 4 x 4
-        # Self_Attention(self.ndf * 8, 'relu')
-
         self.last = SpectralNorm(nn.Conv2d(self.ndf * 8, 1, [3, 6], 1, 0))
-        # nn.Sigmoid()
-        # state size: 1 x 1 x 1
-
-        # for m in self.modules():
-        #     if isinstance(m, nn.Conv2d):
-        #         m.weight.data.normal_(0.0, 0.02)
-        #         if m.bias is not None:
-        #             m.bias.data.zero_()
 
     def forward(self, input):
         feature1 = self.layer1(input)
@@ -163,7 +151,7 @@ class Discriminator_WITHOUT_FC_x64_video(nn.Module):
 
 class Discriminator_WITHOUT_FC_x64_video_BIG(nn.Module):
     """
-        Discriminative Network
+    Discriminative Network
     """
 
     def __init__(self, in_size=6, ndf=64):
@@ -219,7 +207,7 @@ class Discriminator_WITHOUT_FC_x64_video_BIG(nn.Module):
 
 class Discriminator_WITHOUT_FC_x64(nn.Module):
     """
-        Discriminative Network
+    Discriminative Network
     """
 
     def __init__(self, in_size=3, ndf=64):
@@ -248,14 +236,6 @@ class Discriminator_WITHOUT_FC_x64(nn.Module):
         )
 
         self.last = SpectralNorm(nn.Conv2d(self.ndf * 8, 1, 4, 1, 0))
-        # nn.Sigmoid()
-        # state size: 1 x 1 x 1
-
-        # for m in self.modules():
-        #     if isinstance(m, nn.Conv2d):
-        #         m.weight.data.normal_(0.0, 0.02)
-        #         if m.bias is not None:
-        #             m.bias.data.zero_()
 
     def forward(self, input):
 
@@ -268,7 +248,7 @@ class Discriminator_WITHOUT_FC_x64(nn.Module):
 
 class Discriminator_WITHOUT_FC_x64_BIG(nn.Module):
     """
-        Discriminative Network
+    Discriminative Network
     """
 
     def __init__(self, in_size=3, ndf=64):
@@ -316,7 +296,7 @@ class Discriminator_WITHOUT_FC_x64_BIG(nn.Module):
 
 class Discriminator_WITHOUT_FC_x128(nn.Module):
     """
-        Discriminative Network
+    Discriminative Network
     """
 
     def __init__(self, in_size=3, ndf=64):
@@ -359,7 +339,7 @@ class Discriminator_WITHOUT_FC_x128(nn.Module):
 
 class Discriminator_WITHOUT_FC_x256(nn.Module):
     """
-        Discriminative Network
+    Discriminative Network
     """
 
     def __init__(self, in_size=3, ndf=64):

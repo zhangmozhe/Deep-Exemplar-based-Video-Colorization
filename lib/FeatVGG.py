@@ -17,7 +17,6 @@ class FeatVGG(nn.Module):
     def __init__(self, content_layers=["relu3_1"]):
         super(FeatVGG, self).__init__()
         self.content_layers = conv_to_relu(content_layers)
-        # set up vgg19 model
         self.vgg19 = vgg_util.get_renamed_vgg()
         self.last_c_layer = self.content_layers[-1]
         is_last_content = False
@@ -52,11 +51,12 @@ class VGGNet_multilayer(nn.Module):
         self.vgg = models.vgg19(pretrained=True).features
 
     def forward(self, x):
-        # x: rgb image
-        # ranges in [0,1]
-        # should be normalzied with mean = [0.485, 0.456, 0.406]
-        # and variance = [0.229, 0.224, 0.225]
-        """Extract multiple convolutional feature maps."""
+        """Extract multiple convolutional feature maps.
+        x: rgb image
+        ranges in [0,1]
+        should be normalzied with mean = [0.485, 0.456, 0.406]
+        and variance = [0.229, 0.224, 0.225]
+        """
         features = []
         for name, layer in self.vgg._modules.items():
             x = layer(x)

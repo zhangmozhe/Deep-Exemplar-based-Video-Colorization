@@ -1,8 +1,6 @@
-import numbers
 import os
 import shutil
 import sys
-import time
 
 import cv2
 import matplotlib.pyplot as plt
@@ -55,8 +53,8 @@ class MovingAvg(object):
 
 
 ###### image normalization ######
-# normalization for l
 def center_l(l):
+    # normalization for l
     l_mc = (l - l_mean) / l_norm
     return l_mc
 
@@ -68,31 +66,28 @@ def uncenter_l(l):
 
 # normalization for ab
 def center_ab(ab):
-    ab_mc = (ab - ab_mean) / ab_norm
-    return ab_mc
+    return (ab - ab_mean) / ab_norm
 
 
 # normalization for lab image
 def center_lab_img(img_lab):
-    img_lab_mc = (
+    return (
         img_lab / np.array((l_norm, ab_norm, ab_norm))[:, np.newaxis, np.newaxis]
         - np.array((l_mean / l_norm, ab_mean / ab_norm, ab_mean / ab_norm))[:, np.newaxis, np.newaxis]
     )
-    return img_lab_mc
 
 
 ###### color space transformation ######
 def rgb2lab_transpose(img_rgb):
-    img_lab = color.rgb2lab(img_rgb).transpose((2, 0, 1))
-    return img_lab
+    return color.rgb2lab(img_rgb).transpose((2, 0, 1))
 
 
 def lab2rgb(img_l, img_ab):
-    """ INPUTS
-            img_l      XxXx1     [0,100]
-            img_ab     XxXx2     [-100,100]
-        OUTPUTS
-            returned value is XxXx3 """
+    """INPUTS
+        img_l      XxXx1     [0,100]
+        img_ab     XxXx2     [-100,100]
+    OUTPUTS
+        returned value is XxXx3"""
     pred_lab = np.concatenate((img_l, img_ab), axis=2).astype("float64")
     pred_rgb = color.lab2rgb(pred_lab)
     pred_rgb = (np.clip(pred_rgb, 0, 1) * 255).astype("uint8")
@@ -107,14 +102,13 @@ def gray2rgb_batch(l):
 
 
 def lab2rgb_transpose(img_l, img_ab):
-    """ INPUTS
-            img_l      1xXxX     [0,100]
-            img_ab     2xXxX     [-100,100]
-        OUTPUTS
-            returned value is XxXx3 """
+    """INPUTS
+        img_l      1xXxX     [0,100]
+        img_ab     2xXxX     [-100,100]
+    OUTPUTS
+        returned value is XxXx3"""
     pred_lab = np.concatenate((img_l, img_ab), axis=0).transpose((1, 2, 0))
-    pred_rgb = (np.clip(color.lab2rgb(pred_lab), 0, 1) * 255).astype("uint8")
-    return pred_rgb
+    return (np.clip(color.lab2rgb(pred_lab), 0, 1) * 255).astype("uint8")
 
 
 def lab2rgb_transpose_mc(img_l_mc, img_ab_mc):
@@ -134,8 +128,7 @@ def lab2rgb_transpose_mc(img_l_mc, img_ab_mc):
     img_ab = img_ab_mc * ab_norm + ab_mean
     pred_lab = torch.cat((img_l, img_ab), dim=0)
     grid_lab = pred_lab.numpy().astype("float64")
-    grid_rgb = (np.clip(color.lab2rgb(grid_lab.transpose((1, 2, 0))), 0, 1) * 255).astype("uint8")
-    return grid_rgb
+    return (np.clip(color.lab2rgb(grid_lab.transpose((1, 2, 0))), 0, 1) * 255).astype("uint8")
 
 
 def batch_lab2rgb_transpose_mc(img_l_mc, img_ab_mc, nrow=8):
@@ -155,8 +148,7 @@ def batch_lab2rgb_transpose_mc(img_l_mc, img_ab_mc, nrow=8):
     img_ab = img_ab_mc * ab_norm + ab_mean
     pred_lab = torch.cat((img_l, img_ab), dim=1)
     grid_lab = vutils.make_grid(pred_lab, nrow=nrow).numpy().astype("float64")
-    grid_rgb = (np.clip(color.lab2rgb(grid_lab.transpose((1, 2, 0))), 0, 1) * 255).astype("uint8")
-    return grid_rgb
+    return (np.clip(color.lab2rgb(grid_lab.transpose((1, 2, 0))), 0, 1) * 255).astype("uint8")
 
 
 ###### loss functions ######
@@ -205,8 +197,7 @@ def calc_ab_gradient(input_ab):
 def calc_tv_loss(input):
     x_grad = input[:, :, :, 1:] - input[:, :, :, :-1]
     y_grad = input[:, :, 1:, :] - input[:, :, :-1, :]
-    loss = torch.sum(x_grad ** 2) / x_grad.nelement() + torch.sum(y_grad ** 2) / y_grad.nelement()
-    return loss
+    return torch.sum(x_grad ** 2) / x_grad.nelement() + torch.sum(y_grad ** 2) / y_grad.nelement()
 
 
 def calc_cosine_dist_loss(input, target):
@@ -221,15 +212,13 @@ def calc_cosine_dist_loss(input, target):
 def weighted_mse_loss(input, target, weights):
     out = (input - target) ** 2
     out = out * weights.expand_as(out)
-    loss = out.mean()
-    return loss
+    return out.mean()
 
 
 def weighted_l1_loss(input, target, weights):
     out = torch.abs(input - target)
     out = out * weights.expand_as(out)
-    loss = out.mean()
-    return loss
+    return out.mean()
 
 
 def colorfulness(input_ab):
@@ -250,8 +239,7 @@ def colorfulness(input_ab):
     mean_a = torch.mean(a, dim=-1)
     mean_b = torch.mean(b, dim=-1)
 
-    colorfulness = torch.sqrt(sigma_a ** 2 + sigma_b ** 2) + 0.37 * torch.sqrt(mean_a ** 2 + mean_b ** 2)
-    return colorfulness
+    return torch.sqrt(sigma_a ** 2 + sigma_b ** 2) + 0.37 * torch.sqrt(mean_a ** 2 + mean_b ** 2)
 
 
 ###### video related #######
@@ -270,16 +258,14 @@ def folder2vid(image_folder, output_dir, filename):
     print(images)
     frame = cv2.imread(os.path.join(image_folder, images[0]))
     height, width, layers = frame.shape
-    # video = cv2.VideoWriter(os.path.join(output_dir, filename), 0x00000021, 24, (width, height))
     print("writing to video " + os.path.join(output_dir, filename))
     video = cv2.VideoWriter(
         os.path.join(output_dir, filename), cv2.VideoWriter_fourcc("D", "I", "V", "X"), 24, (width, height)
     )
-    # video = cv2.VideoWriter(os.path.join(output_dir, filename), cv2.VideoWriter_fourcc('H', '2', '6', '4'), 24, (width, height))
+
     for image in images:
         video.write(cv2.imread(os.path.join(image_folder, image)))
 
-    # cv2.destroyAllWindows()
     video.release()
 
     # import imageio
@@ -363,10 +349,8 @@ def vgg_preprocess(tensor):
     # input is RGB tensor which ranges in [0,1]
     # output is BGR tensor which ranges in [0,255]
     tensor_bgr = torch.cat((tensor[:, 2:3, :, :], tensor[:, 1:2, :, :], tensor[:, 0:1, :, :]), dim=1)
-    # tensor_bgr = tensor[:, [2, 1, 0], ...]
     tensor_bgr_ml = tensor_bgr - torch.Tensor([0.40760392, 0.45795686, 0.48501961]).type_as(tensor_bgr).view(1, 3, 1, 1)
-    tensor_rst = tensor_bgr_ml * 255
-    return tensor_rst
+    return tensor_bgr_ml * 255
 
 
 def torch_vgg_preprocess(tensor):
@@ -375,48 +359,57 @@ def torch_vgg_preprocess(tensor):
     # input and output ranges in [0,1]
     # normalize the tensor with mean and variance
     tensor_mc = tensor - torch.Tensor([0.485, 0.456, 0.406]).type_as(tensor).view(1, 3, 1, 1)
-    tensor_mc_norm = tensor_mc / torch.Tensor([0.229, 0.224, 0.225]).type_as(tensor_mc).view(1, 3, 1, 1)
-    return tensor_mc_norm
+    return tensor_mc / torch.Tensor([0.229, 0.224, 0.225]).type_as(tensor_mc).view(1, 3, 1, 1)
 
 
 def network_gradient(net, gradient_on=True):
-    if gradient_on:
-        for param in net.parameters():
-            param.requires_grad = True
-    else:
-        for param in net.parameters():
-            param.requires_grad = False
+    for param in net.parameters():
+        param.requires_grad = bool(gradient_on)
     return net
 
 
-# def load_gray_image(img_path):
-#     img_path = utf8_str(img_path)
-#     img_gray = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
-#     return img_gray
+##### color space
+xyz_from_rgb = np.array(
+    [[0.412453, 0.357580, 0.180423], [0.212671, 0.715160, 0.072169], [0.019334, 0.119193, 0.950227]]
+)
+rgb_from_xyz = np.array(
+    [[3.24048134, -0.96925495, 0.05564664], [-1.53715152, 1.87599, -0.20404134], [-0.49853633, 0.04155593, 1.05731107]]
+)
 
-# def load_rgb_image(img_path):
-#     img_path = utf8_str(img_path)
-#     im = cv2.imread(img_path, cv2.IMREAD_COLOR)
-#     if im.shape[2] == 1:
-#         print('find gray images: ', img_path)
-#         im = cv2.cvtColor(im, cv2.COLOR_GRAY2BGR)
-#     img_rgb = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
-#     return img_rgb
 
-# def resize_img_longside(img_rgb, long_size, interpolation):
-#     h, w = img_rgb.shape[:2]
-#     scalar = long_size / max(h, w)
-#     resized_img_rgb = cv2.resize(img_rgb, (int(w * scalar), int(h * scalar)), interpolation=interpolation)
-#     return resized_img_rgb
+def tensor_lab2rgb(input):
+    """
+    n * 3* h *w
+    """
+    input_trans = input.transpose(1, 2).transpose(2, 3)  # n * h * w * 3
+    L, a, b = input_trans[:, :, :, 0:1], input_trans[:, :, :, 1:2], input_trans[:, :, :, 2:]
+    y = (L + 16.0) / 116.0
+    x = (a / 500.0) + y
+    z = y - (b / 200.0)
 
-# def resize_img_shortside(img_rgb, short_size, interpolation):
-#     h, w = img_rgb.shape[:2]
-#     scalar = short_size / min(h, w)
-#     resized_img_rgb = cv2.resize(img_rgb, (int(w * scalar), int(h * scalar)), interpolation=interpolation)
-#     return resized_img_rgb
+    neg_mask = z.data < 0
+    z[neg_mask] = 0
+    xyz = torch.cat((x, y, z), dim=3)
 
-# def resize_img(img_rgb, dsize, interpolation):
-#     if isinstance(dsize, numbers.Number):
-#         dsize = (int(dsize), int(dsize))
-#     resized_img_rgb = cv2.resize(img_rgb, dsize, interpolation=interpolation)
-#     return resized_img_rgb
+    mask = xyz.data > 0.2068966
+    mask_xyz = xyz.clone()
+    mask_xyz[mask] = torch.pow(xyz[mask], 3.0)
+    mask_xyz[~mask] = (xyz[~mask] - 16.0 / 116.0) / 7.787
+    mask_xyz[:, :, :, 0] = mask_xyz[:, :, :, 0] * 0.95047
+    mask_xyz[:, :, :, 2] = mask_xyz[:, :, :, 2] * 1.08883
+
+    rgb_trans = torch.mm(mask_xyz.view(-1, 3), torch.from_numpy(rgb_from_xyz).type_as(xyz)).view(
+        input.size(0), input.size(2), input.size(3), 3
+    )
+    rgb = rgb_trans.transpose(2, 3).transpose(1, 2)
+
+    mask = rgb > 0.0031308
+    mask_rgb = rgb.clone()
+    mask_rgb[mask] = 1.055 * torch.pow(rgb[mask], 1 / 2.4) - 0.055
+    mask_rgb[~mask] = rgb[~mask] * 12.92
+
+    neg_mask = mask_rgb.data < 0
+    large_mask = mask_rgb.data > 1
+    mask_rgb[neg_mask] = 0
+    mask_rgb[large_mask] = 1
+    return mask_rgb

@@ -14,12 +14,14 @@ def find_local_patch(x, patch_size):
     x_unfold = F.unfold(
         x, kernel_size=(patch_size, patch_size), padding=(patch_size // 2, patch_size // 2), stride=(1, 1)
     )
-    out = x_unfold.view(N, x_unfold.shape[1], H, W)
-    return out
+
+    return x_unfold.view(N, x_unfold.shape[1], H, W)
 
 
 class WeightedAverage(nn.Module):
-    def __init__(self,):
+    def __init__(
+        self,
+    ):
         super(WeightedAverage, self).__init__()
 
     def forward(self, x_lab, patch_size=3, alpha=1, scale_factor=1):
@@ -34,14 +36,13 @@ class WeightedAverage(nn.Module):
         local_difference_l = (local_l - l) ** 2
         correlation = nn.functional.softmax(-1 * local_difference_l / alpha, dim=1)
 
-        weighted_ab = torch.cat(
+        return torch.cat(
             (
                 torch.sum(correlation * local_a, dim=1, keepdim=True),
                 torch.sum(correlation * local_b, dim=1, keepdim=True),
             ),
             1,
         )
-        return weighted_ab
 
 
 class WeightedAverage_color(nn.Module):
@@ -49,11 +50,13 @@ class WeightedAverage_color(nn.Module):
     smooth the image according to the color distance in the LAB space
     """
 
-    def __init__(self,):
+    def __init__(
+        self,
+    ):
         super(WeightedAverage_color, self).__init__()
 
     def forward(self, x_lab, x_lab_predict, patch_size=3, alpha=1, scale_factor=1):
-        # alpha=0: less smooth; alpha=inf: smoother
+        """ alpha=0: less smooth; alpha=inf: smoother """
         x_lab = F.interpolate(x_lab, scale_factor=scale_factor)
         l = uncenter_l(x_lab[:, 0:1, :, :])
         a = x_lab[:, 1:2, :, :]
@@ -71,18 +74,19 @@ class WeightedAverage_color(nn.Module):
             -1 * local_color_difference / alpha, dim=1
         )  # so that sum of weights equal to 1
 
-        weighted_ab = torch.cat(
+        return torch.cat(
             (
                 torch.sum(correlation * local_a_predict, dim=1, keepdim=True),
                 torch.sum(correlation * local_b_predict, dim=1, keepdim=True),
             ),
             1,
         )
-        return weighted_ab
 
 
 class NonlocalWeightedAverage(nn.Module):
-    def __init__(self,):
+    def __init__(
+        self,
+    ):
         super(NonlocalWeightedAverage, self).__init__()
 
     def forward(self, x_lab, feature, patch_size=3, alpha=0.1, scale_factor=1):
@@ -113,56 +117,36 @@ class CorrelationLayer(nn.Module):
         self.search_range = search_range
 
     def forward(self, x1, x2, alpha=1, raw_output=False, metric="similarity"):
-        # args = self.args
-
         shape = list(x1.size())
         shape[1] = (self.search_range * 2 + 1) ** 2
         cv = torch.zeros(shape).to(torch.device("cuda"))
 
-        if metric == "similarity":
-            for i in range(-self.search_range, self.search_range + 1):
-                for j in range(-self.search_range, self.search_range + 1):
-                    if i < 0:
-                        slice_h, slice_h_r = slice(None, i), slice(-i, None)
-                    elif i > 0:
-                        slice_h, slice_h_r = slice(i, None), slice(None, -i)
-                    else:
-                        slice_h, slice_h_r = slice(None), slice(None)
+        for i in range(-self.search_range, self.search_range + 1):
+            for j in range(-self.search_range, self.search_range + 1):
+                if i < 0:
+                    slice_h, slice_h_r = slice(None, i), slice(-i, None)
+                elif i > 0:
+                    slice_h, slice_h_r = slice(i, None), slice(None, -i)
+                else:
+                    slice_h, slice_h_r = slice(None), slice(None)
 
-                    if j < 0:
-                        slice_w, slice_w_r = slice(None, j), slice(-j, None)
-                    elif j > 0:
-                        slice_w, slice_w_r = slice(j, None), slice(None, -j)
-                    else:
-                        slice_w, slice_w_r = slice(None), slice(None)
+                if j < 0:
+                    slice_w, slice_w_r = slice(None, j), slice(-j, None)
+                elif j > 0:
+                    slice_w, slice_w_r = slice(j, None), slice(None, -j)
+                else:
+                    slice_w, slice_w_r = slice(None), slice(None)
 
-                    # storage sequence (eg. search_range=3): -24, -23, .., -1, 0, 1, ..., 23, 24
+                if metric == "similarity":
                     cv[:, (self.search_range * 2 + 1) * i + j, slice_h, slice_w] = (
                         x1[:, :, slice_h, slice_w] * x2[:, :, slice_h_r, slice_w_r]
                     ).sum(1)
-        else:  # patchwise subtraction
-            for i in range(-self.search_range, self.search_range + 1):
-                for j in range(-self.search_range, self.search_range + 1):
-                    if i < 0:
-                        slice_h, slice_h_r = slice(None, i), slice(-i, None)
-                    elif i > 0:
-                        slice_h, slice_h_r = slice(i, None), slice(None, -i)
-                    else:
-                        slice_h, slice_h_r = slice(None), slice(None)
-
-                    if j < 0:
-                        slice_w, slice_w_r = slice(None, j), slice(-j, None)
-                    elif j > 0:
-                        slice_w, slice_w_r = slice(j, None), slice(None, -j)
-                    else:
-                        slice_w, slice_w_r = slice(None), slice(None)
-
-                    # storage sequence (eg. search_range=3): -24, -23, .., -1, 0, 1, ..., 23, 24
+                else:  # patchwise subtraction
                     cv[:, (self.search_range * 2 + 1) * i + j, slice_h, slice_w] = -(
                         (x1[:, :, slice_h, slice_w] - x2[:, :, slice_h_r, slice_w_r]) ** 2
                     ).sum(1)
 
-        ## TODO sigmoid?
+        # TODO sigmoid?
         if raw_output:
             return cv
         else:
@@ -185,11 +169,11 @@ class Self_Attn(nn.Module):
 
     def forward(self, x):
         """
-            inputs :
-                x : input feature maps(B X C X W X H)
-            returns :
-                out : self attention value + input feature 
-                attention: B X N X N (N is Width*Height)
+        inputs :
+            x : input feature maps(B X C X W X H)
+        returns :
+            out : self attention value + input feature
+            attention: B X N X N (N is Width*Height)
         """
         m_batchsize, C, width, height = x.size()
         proj_query = self.query_conv(x).view(m_batchsize, -1, width * height).permute(0, 2, 1)  # B X N X C
@@ -206,7 +190,7 @@ class Self_Attn(nn.Module):
 
 
 class VGG19_feature_color_torchversion(nn.Module):
-    """ 
+    """
     NOTE: no need to pre-process the input; input tensor should range in [0,1]
     """
 
@@ -242,7 +226,7 @@ class VGG19_feature_color_torchversion(nn.Module):
             self.pool5 = nn.AvgPool2d(kernel_size=2, stride=2)
 
     def forward(self, x, out_keys, preprocess=True):
-        """ 
+        """
         NOTE: input tensor should range in [0,1]
         """
         out = {}
@@ -283,8 +267,8 @@ class VGG19_feature_color(nn.Module):
         """Extract multiple convolutional feature maps."""
         features = []
         for name, layer in self.vgg._modules.items():
-            x = layer(x)
             if name in self.select:
+                x = layer(x)
                 features.append(x)
         return features
 
@@ -301,70 +285,20 @@ class VGG19_feature(nn.Module):
         return A_relu3_1, A_relu4_1, A_relu5_1, B_relu3_1, B_relu4_1, B_relu5_1
 
 
-class VGG19_feature_new(nn.Module):
-    # input: [LLL] channels, range=[0,255]
-    def __init__(self, gpu_ids):
-        super(VGG19_feature_new, self).__init__()
-        self.vgg19_gray_new = vgg19_gray_new().cuda()
-
-    def forward(self, A_l, B_l):
-        A_relu2_1, A_relu3_1, A_relu4_1, A_relu5_1 = self.vgg19_gray_new(A_l)
-        B_relu2_1, B_relu3_1, B_relu4_1, B_relu5_1 = self.vgg19_gray_new(B_l)
-        return A_relu2_1, A_relu3_1, A_relu4_1, A_relu5_1, B_relu2_1, B_relu3_1, B_relu4_1, B_relu5_1
-
-
-class WTA(torch.autograd.Function):
-    """
-  We can implement our own custom autograd Functions by subclassing
-  torch.autograd.Function and implementing the forward and backward passes
-  which operate on Tensors.
-  """
-
-    @staticmethod
-    def forward(ctx, input):
-        """
-    In the forward pass we receive a Tensor containing the input and return a
-    Tensor containing the output. You can cache arbitrary Tensors for use in the
-    backward pass using the save_for_backward method.
-    """
-        height = input.shape[2]
-        width = input.shape[3]
-        activation_max, index_max = torch.topk(input, -1, keepdim=True)
-        input_zeros = input * 0
-        output_max_only = torch.where(input == activation_max, input, input_zeros)
-
-        mask = (output_max_only > 0).type(torch.float)
-        ctx.save_for_backward(input, mask)
-        return output_max_only
-
-    @staticmethod
-    def backward(ctx, grad_output):
-        """
-    In the backward pass we receive a Tensor containing the gradient of the loss
-    with respect to the output, and we need to compute the gradient of the loss
-    with respect to the input.
-    """
-        # import pdb
-        # pdb.set_trace()
-        input, mask = ctx.saved_tensors
-        grad_input = grad_output.clone() * mask
-        return grad_input
-
-
 class WTA_scale(torch.autograd.Function):
     """
-  We can implement our own custom autograd Functions by subclassing
-  torch.autograd.Function and implementing the forward and backward passes
-  which operate on Tensors.
-  """
+    We can implement our own custom autograd Functions by subclassing
+    torch.autograd.Function and implementing the forward and backward passes
+    which operate on Tensors.
+    """
 
     @staticmethod
     def forward(ctx, input, scale=1e-4):
         """
-    In the forward pass we receive a Tensor containing the input and return a
-    Tensor containing the output. You can cache arbitrary Tensors for use in the
-    backward pass using the save_for_backward method.
-    """
+        In the forward pass we receive a Tensor containing the input and return a
+        Tensor containing the output. You can cache arbitrary Tensors for use in the
+        backward pass using the save_for_backward method.
+        """
         activation_max, index_max = torch.max(input, -1, keepdim=True)
         input_scale = input * scale  # default: 1e-4
         # input_scale = input * scale  # default: 1e-4
@@ -377,10 +311,10 @@ class WTA_scale(torch.autograd.Function):
     @staticmethod
     def backward(ctx, grad_output):
         """
-    In the backward pass we receive a Tensor containing the gradient of the loss
-    with respect to the output, and we need to compute the gradient of the loss
-    with respect to the input.
-    """
+        In the backward pass we receive a Tensor containing the gradient of the loss
+        with respect to the output, and we need to compute the gradient of the loss
+        with respect to the input.
+        """
         # import pdb
         # pdb.set_trace()
         input, mask = ctx.saved_tensors
@@ -418,9 +352,9 @@ class ResidualBlock(nn.Module):
         return out
 
 
-## NOTE: THIS IS THE FINAL VERSION
 class WarpNet(nn.Module):
-    # input is Al, Bl, channel = 1, range~[0,255]
+    """ input is Al, Bl, channel = 1, range~[0,255] """
+
     def __init__(self, batch_size):
         super(WarpNet, self).__init__()
         self.feature_channel = 64
@@ -549,12 +483,9 @@ class WarpNet(nn.Module):
         similarity_map = similarity_map.view(batch_size, 1, feature_height, feature_width)
 
         # f can be negative
-        if WTA_scale_weight == 1:
-            f_WTA = f
-        else:
-            f_WTA = WTA_scale.apply(f, WTA_scale_weight)
+        f_WTA = f if WTA_scale_weight == 1 else WTA_scale.apply(f, WTA_scale_weight)
         f_WTA = f_WTA / temperature
-        f_div_C = F.softmax(f_WTA.squeeze_(), dim=-1)  # 2*1936*1936; softmax along the horizontal line (dim=-1)
+        f_div_C = F.softmax(f_WTA.squeeze_(), dim=-1)  # 2*1936*1936;
 
         # downsample the reference color
         B_lab = F.avg_pool2d(B_lab_map, 4)

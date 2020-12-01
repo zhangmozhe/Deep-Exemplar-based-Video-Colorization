@@ -1,9 +1,7 @@
-from collections import OrderedDict, namedtuple
 from functools import reduce
 
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
 
 
 class LambdaBase(nn.Sequential):
@@ -15,6 +13,7 @@ class LambdaBase(nn.Sequential):
         output = []
         for module in self._modules.values():
             output.append(module(input))
+
         return output if output else input
 
 
@@ -126,13 +125,10 @@ model = nn.Sequential(  # Sequential,
 )
 
 
-model.load_state_dict(torch.load("models/vgg19_gray.pth"))
-# print(model)
+model.load_state_dict(torch.load("data/vgg19_gray.pth"))
 vgg19_gray_net = torch.nn.Sequential()
 for (name, layer) in model._modules.items():
     vgg19_gray_net.add_module(layer_names[int(name)], model[int(name)])
-# print(vgg19_gray_net)
-
 
 for param in vgg19_gray_net.parameters():
     param.requires_grad = False
@@ -163,8 +159,6 @@ class vgg19_gray(torch.nn.Module):
         h_relu4_1 = h
         h = self.slice3(h)
         h_relu5_1 = h
-        # vgg_outputs = namedtuple("VggOutputs", ['h_relu3_1', 'h_relu4_1', 'h_relu5_1'])
-        # out = vgg_outputs(h_relu3_1, h_relu4_1, h_relu5_1)
         return h_relu3_1, h_relu4_1, h_relu5_1
 
 
@@ -197,40 +191,4 @@ class vgg19_gray_new(torch.nn.Module):
         h_relu4_1 = h
         h = self.slice3(h)
         h_relu5_1 = h
-        # vgg_outputs = namedtuple("VggOutputs", ['h_relu3_1', 'h_relu4_1', 'h_relu5_1'])
-        # out = vgg_outputs(h_relu3_1, h_relu4_1, h_relu5_1)
         return h_relu2_1, h_relu3_1, h_relu4_1, h_relu5_1
-
-
-# class vgg19_gray_conv(torch.nn.Module):
-#     def __init__(self, requires_grad=False):
-#         super(vgg19_gray_conv, self).__init__()
-#         vgg_pretrained_features = vgg19_gray_net
-#         self.slice0 = torch.nn.Sequential()
-#         self.slice1 = torch.nn.Sequential()
-#         self.slice2 = torch.nn.Sequential()
-#         self.slice3 = torch.nn.Sequential()
-#         for x in range(6):
-#             self.slice0.add_module(layer_names[x], vgg_pretrained_features[x])
-#         for x in range(6, 11):
-#             self.slice1.add_module(layer_names[x], vgg_pretrained_features[x])
-#         for x in range(11, 20):
-#             self.slice2.add_module(layer_names[x], vgg_pretrained_features[x])
-#         for x in range(20, 29):
-#             self.slice3.add_module(layer_names[x], vgg_pretrained_features[x])
-#         if not requires_grad:
-#             for param in self.parameters():
-#                 param.requires_grad = False
-
-#     def forward(self, X):
-#         h = self.slice0(X)
-#         h_relu2_1 = h
-#         h = self.slice1(h)
-#         h_relu3_1 = h
-#         h = self.slice2(h)
-#         h_relu4_1 = h
-#         h = self.slice3(h)
-#         h_relu5_1 = h
-#         # vgg_outputs = namedtuple("VggOutputs", ['h_relu3_1', 'h_relu4_1', 'h_relu5_1'])
-#         # out = vgg_outputs(h_relu3_1, h_relu4_1, h_relu5_1)
-#         return h_relu2_1, h_relu3_1, h_relu4_1, h_relu5_1

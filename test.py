@@ -16,8 +16,7 @@ import lib.TestTransforms as transforms
 from models.ColorVidNet import ColorVidNet
 from models.FrameColor import frame_colorization
 from models.NonlocalNet import VGG19_feature_color_torchversion, WarpNet
-from utils.tensor_lab2rgb import tensor_lab2rgb
-from utils.util import batch_lab2rgb_transpose_mc, folder2vid, mkdir_if_not, save_frames, uncenter_l
+from utils.util import batch_lab2rgb_transpose_mc, folder2vid, mkdir_if_not, save_frames, tensor_lab2rgb, uncenter_l
 from utils.util_distortion import CenterPad, Normalize, RGB2Lab, ToTensor
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
@@ -50,11 +49,10 @@ def colorize_video(opt, input_path, reference_path, output_path, nonlocal_net, c
     print("reference name:", ref_name)
     frame_ref = Image.open(ref_name)
 
-    iter_num = 0
     total_time = 0
     I_last_lab_predict = None
 
-    for index in range(file_count):
+    for iter_num, index in enumerate(range(file_count)):
         frame_name = filenames[index]
         print("input =", frame_name)
         print("reference =", ref_name)
@@ -131,11 +129,9 @@ def colorize_video(opt, input_path, reference_path, output_path, nonlocal_net, c
 
         # save the frames
         save_frames(IA_predict_rgb, output_path, index)
-        iter_num = iter_num + 1
-
     # output video
     video_name = "video.avi"
-    folder2vid(image_folder=output_path, output_dir=".", filename=video_name)
+    folder2vid(image_folder=output_path, output_dir=output_path, filename=video_name)
 
 
 if __name__ == "__main__":

@@ -208,23 +208,22 @@ def resize(img, size, interpolation=Image.BILINEAR):
     """
     if not _is_pil_image(img):
         raise TypeError("img should be PIL Image. Got {}".format(type(img)))
-    if not (isinstance(size, int) or (isinstance(size, collections.Iterable) and len(size) == 2)):
+    if not isinstance(size, int) and (not isinstance(size, collections.Iterable) or len(size) != 2):
         raise TypeError("Got inappropriate size arg: {}".format(size))
 
-    if isinstance(size, int):
-        w, h = img.size
-        if (w <= h and w == size) or (h <= w and h == size):
-            return img
-        if w < h:
-            ow = size
-            oh = int(round(size * h / w))
-            return img.resize((ow, oh), interpolation)
-        else:
-            oh = size
-            ow = int(round(size * w / h))
-            return img.resize((ow, oh), interpolation)
-    else:
+    if not isinstance(size, int):
         return img.resize(size[::-1], interpolation)
+
+    w, h = img.size
+    if (w <= h and w == size) or (h <= w and h == size):
+        return img
+    if w < h:
+        ow = size
+        oh = int(round(size * h / w))
+    else:
+        oh = size
+        ow = int(round(size * w / h))
+    return img.resize((ow, oh), interpolation)
 
 
 def scale(*args, **kwargs):

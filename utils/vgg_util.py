@@ -119,18 +119,15 @@ class MaxScale(object):
         Returns:
             PIL.Image: Rescaled image.
         """
-        if isinstance(self.size, int):
-            w, h = img.size
-            if (w <= h == self.size) or (h <= w == self.size):
-                return img
-            if w < h:
-                oh = self.size
-                ow = int(self.size * w / h)
-                return img.resize((ow, oh), self.interpolation)
-            else:
-                ow = self.size
-                oh = int(self.size * h / w)
-                return img.resize((ow, oh), self.interpolation)
-        else:
+        if not isinstance(self.size, int):
             return img.resize(self.size, self.interpolation)
-
+        w, h = img.size
+        if (w <= h == self.size) or (h <= w == self.size):
+            return img
+        if w < h:
+            oh = self.size
+            ow = int(self.size * w / h)
+        else:
+            ow = self.size
+            oh = int(self.size * h / w)
+        return img.resize((ow, oh), self.interpolation)
