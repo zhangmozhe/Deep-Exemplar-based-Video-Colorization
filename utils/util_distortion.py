@@ -3,23 +3,15 @@ import random
 
 import cv2
 import lib.functional as F
-import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
-from scipy.misc import imread, imsave
 from scipy.ndimage.filters import gaussian_filter
 from skimage import color
-from skimage import transform as skimage_transform
 from skimage.draw import random_shapes
 from skimage.filters import gaussian
-from skimage.transform import resize, rotate
+from skimage.transform import resize
 
 cv2.setNumThreads(0)
-
-import time
-
-import scipy.io as scio
-import skimage.io as io
 from numba import jit, u1, u2
 
 
@@ -28,13 +20,11 @@ class RGB2Lab(object):
         pass
 
     def __call__(self, inputs):
-        image_lab = color.rgb2lab(inputs)
-        return image_lab
+        return color.rgb2lab(inputs)
 
 
 class Guassian_noise(object):
-    """Elastic distortion
-    """
+    """Elastic distortion"""
 
     def __init__(self, noise_sigma=0.1):
         self.noise_sigma = noise_sigma
@@ -50,8 +40,7 @@ class Guassian_noise(object):
 
 
 class Distortion(object):
-    """Elastic distortion
-    """
+    """Elastic distortion"""
 
     def __init__(self, distortion_level=3, flip_probability=0):
         self.alpha_max = distortion_level
@@ -79,8 +68,7 @@ class Distortion(object):
 
 
 class Distortion_with_flow(object):
-    """Elastic distortion
-    """
+    """Elastic distortion"""
 
     def __init__(self):
         return
@@ -89,13 +77,7 @@ class Distortion_with_flow(object):
         inputs = np.array(inputs)
         shape = inputs.shape[0], inputs.shape[1]
         inputs = np.array(inputs)
-        # x, y = np.meshgrid(np.arange(shape[0]), np.arange(shape[1]), indexing='ij')
-        # remap_image = cv2.remap(inputs, (dy + y).astype(np.float32), (dx + x).astype(np.float32), interpolation=cv2.INTER_LINEAR)
-        # backward mapping
-
         remap_image = forward_mapping(inputs, dy, dx, maxIter=3, precision=1e-3)
-        # remap_image = cv2.remap(inputs, (dy + y).astype(np.float32), (dx + x).astype(np.float32), interpolation=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)
-        # remap_image = inputs
 
         return Image.fromarray(remap_image)
 
@@ -115,13 +97,12 @@ class ToTensor(object):
         pass
 
     def __call__(self, inputs):
-        outputs = F.to_mytensor(inputs)
-        return outputs
+        return F.to_mytensor(inputs)
 
 
 class RandomErasing(object):
     """
-    Class that performs Random Erasing in Random Erasing Data Augmentation by Zhong et al. 
+    Class that performs Random Erasing in Random Erasing Data Augmentation by Zhong et al.
     -------------------------------------------------------------------------------------
     probability: The probability that the operation will be performed.
     sl: min erasing area
@@ -153,6 +134,7 @@ class RandomErasing(object):
             x1 = random.randint(0, img.shape[0] - h)
             y1 = random.randint(0, img.shape[1] - w)
             img[x1 : x1 + h, y1 : y1 + w, :] = np.random.rand(h, w, channel) * 255
+
             return Image.fromarray(img)
 
         return Image.fromarray(img)
@@ -254,10 +236,9 @@ class CenterPad(object):
         if height_old / width_old == ratio:
             if height_old == height:
                 return Image.fromarray(I.astype(np.uint8))
-            else:
-                new_size = [int(x * height / height_old) for x in old_size]
-                I_resize = resize(I, new_size, mode="reflect", preserve_range=True, clip=False, anti_aliasing=True)
-                return Image.fromarray(I_resize.astype(np.uint8))
+            new_size = [int(x * height / height_old) for x in old_size]
+            I_resize = resize(I, new_size, mode="reflect", preserve_range=True, clip=False, anti_aliasing=True)
+            return Image.fromarray(I_resize.astype(np.uint8))
 
         if height_old / width_old > ratio:  # pad the width and crop
             new_size = [int(x * width / width_old) for x in old_size]
@@ -301,10 +282,9 @@ class CenterPad_threshold(object):
         if height_old / width_old == ratio:
             if height_old == height:
                 return Image.fromarray(I.astype(np.uint8))
-            else:
-                new_size = [int(x * height / height_old) for x in old_size]
-                I_resize = resize(I, new_size, mode="reflect", preserve_range=True, clip=False, anti_aliasing=True)
-                return Image.fromarray(I_resize.astype(np.uint8))
+            new_size = [int(x * height / height_old) for x in old_size]
+            I_resize = resize(I, new_size, mode="reflect", preserve_range=True, clip=False, anti_aliasing=True)
+            return Image.fromarray(I_resize.astype(np.uint8))
 
         if height_old / width_old > self.threshold:
             width_new, height_new = width_old, int(width_old * self.threshold)
@@ -315,13 +295,6 @@ class CenterPad_threshold(object):
                 I_crop, [height, width], mode="reflect", preserve_range=True, clip=False, anti_aliasing=True
             )
 
-            # debug:
-            # height_new, width_new, channel = I_crop.shape
-            # print(width_new / height_new)
-            # import matplotlib.pyplot as plt
-            # plt.imshow(I / 255)
-            # plt.figure()
-            # plt.imshow(I_resize / 255)
             return Image.fromarray(I_resize.astype(np.uint8))
 
         if height_old / width_old > ratio:  # pad the width and crop
@@ -433,70 +406,64 @@ def iterSearchShader(padu, padv, xr, yr, W, H, maxIter, precision):
     if abs(padu[yr, xr]) < precision and abs(padv[yr, xr]) < precision:
         return xr, yr
 
-    else:
         # Our initialize method in this paper, can see the overleaf for detail
-        if (xr + 1) <= (W - 1):
-            dif = padu[yr, xr + 1] - padu[yr, xr]
-            u_next = padu[yr, xr] / (1 + dif)
-        else:
-            dif = padu[yr, xr] - padu[yr, xr - 1]
-            u_next = padu[yr, xr] / (1 + dif)
+    if (xr + 1) <= (W - 1):
+        dif = padu[yr, xr + 1] - padu[yr, xr]
+    else:
+        dif = padu[yr, xr] - padu[yr, xr - 1]
+    u_next = padu[yr, xr] / (1 + dif)
+    if (yr + 1) <= (H - 1):
+        dif = padv[yr + 1, xr] - padv[yr, xr]
+    else:
+        dif = padv[yr, xr] - padv[yr - 1, xr]
+    v_next = padv[yr, xr] / (1 + dif)
+    i = xr - u_next
+    j = yr - v_next
+    i_int = int(i)
+    j_int = int(j)
 
-        if (yr + 1) <= (H - 1):
-            dif = padv[yr + 1, xr] - padv[yr, xr]
-            v_next = padv[yr, xr] / (1 + dif)
-        else:
-            dif = padv[yr, xr] - padv[yr - 1, xr]
-            v_next = padv[yr, xr] / (1 + dif)
+    # The same as traditional iterative search method
+    for _ in range(maxIter):
+        if not 0 <= i <= (W - 1) or not 0 <= j <= (H - 1):
+            return i, j
 
-        i = xr - u_next
-        j = yr - v_next
-        i_int = int(i)
-        j_int = int(j)
+        u11 = padu[j_int, i_int]
+        v11 = padv[j_int, i_int]
 
-        # The same as traditional iterative search method
-        for iter in range(maxIter):
-            if 0 <= i <= (W - 1) and 0 <= j <= (H - 1):
-                u11 = padu[j_int, i_int]
-                v11 = padv[j_int, i_int]
+        u12 = padu[j_int, i_int + 1]
+        v12 = padv[j_int, i_int + 1]
 
-                u12 = padu[j_int, i_int + 1]
-                v12 = padv[j_int, i_int + 1]
+        int1 = padu[j_int + 1, i_int]
+        v21 = padv[j_int + 1, i_int]
 
-                int1 = padu[j_int + 1, i_int]
-                v21 = padv[j_int + 1, i_int]
+        int2 = padu[j_int + 1, i_int + 1]
+        v22 = padv[j_int + 1, i_int + 1]
 
-                int2 = padu[j_int + 1, i_int + 1]
-                v22 = padv[j_int + 1, i_int + 1]
+        u = (
+            u11 * (i_int + 1 - i) * (j_int + 1 - j)
+            + u12 * (i - i_int) * (j_int + 1 - j)
+            + int1 * (i_int + 1 - i) * (j - j_int)
+            + int2 * (i - i_int) * (j - j_int)
+        )
 
-                u = (
-                    u11 * (i_int + 1 - i) * (j_int + 1 - j)
-                    + u12 * (i - i_int) * (j_int + 1 - j)
-                    + int1 * (i_int + 1 - i) * (j - j_int)
-                    + int2 * (i - i_int) * (j - j_int)
-                )
+        v = (
+            v11 * (i_int + 1 - i) * (j_int + 1 - j)
+            + v12 * (i - i_int) * (j_int + 1 - j)
+            + v21 * (i_int + 1 - i) * (j - j_int)
+            + v22 * (i - i_int) * (j - j_int)
+        )
 
-                v = (
-                    v11 * (i_int + 1 - i) * (j_int + 1 - j)
-                    + v12 * (i - i_int) * (j_int + 1 - j)
-                    + v21 * (i_int + 1 - i) * (j - j_int)
-                    + v22 * (i - i_int) * (j - j_int)
-                )
+        i_next = xr - u
+        j_next = yr - v
 
-                i_next = xr - u
-                j_next = yr - v
+        if abs(i - i_next) < precision and abs(j - j_next) < precision:
+            return i, j
 
-                if abs(i - i_next) < precision and abs(j - j_next) < precision:
-                    return i, j
+        i = i_next
+        j = j_next
 
-                i = i_next
-                j = j_next
-
-            else:
-                return i, j
-
-        # if the search doesn't converge within max iter, it will return the last iter result
-        return i_next, j_next
+    # if the search doesn't converge within max iter, it will return the last iter result
+    return i_next, j_next
 
 
 # Bilinear interpolation
@@ -509,13 +476,12 @@ def biInterpolation(distorted, i, j):
     Q21 = distorted[j + 1, i]
     Q22 = distorted[j + 1, i + 1]
 
-    pixel = u1(
+    return u1(
         Q11 * (i + 1 - i) * (j + 1 - j)
         + Q12 * (i - i) * (j + 1 - j)
         + Q21 * (i + 1 - i) * (j - j)
         + Q22 * (i - i) * (j - j)
     )
-    return pixel
 
 
 @jit(nopython=True)
@@ -536,9 +502,21 @@ def iterSearch(distortImg, resultImg, padu, padv, W, H, maxIter=5, precision=1e-
                 j = -j
 
             # Bilinear interpolation to get the pixel at (i, j) in distorted image
-            resultImg[yr, xr, 0] = biInterpolation(distortImg[:, :, 0], i, j,)
-            resultImg[yr, xr, 1] = biInterpolation(distortImg[:, :, 1], i, j,)
-            resultImg[yr, xr, 2] = biInterpolation(distortImg[:, :, 2], i, j,)
+            resultImg[yr, xr, 0] = biInterpolation(
+                distortImg[:, :, 0],
+                i,
+                j,
+            )
+            resultImg[yr, xr, 1] = biInterpolation(
+                distortImg[:, :, 1],
+                i,
+                j,
+            )
+            resultImg[yr, xr, 2] = biInterpolation(
+                distortImg[:, :, 2],
+                i,
+                j,
+            )
     return None
 
 
@@ -601,15 +579,5 @@ def random_mask(H, W, mask_size=200):
     mask = forward_mapping(mask, forward_dy, forward_dx, maxIter=3, precision=1e-3) / 255
     mask = 1 - gaussian(mask, sigma=0, preserve_range=True, multichannel=False, anti_aliasing=True)
     mask = mask[:, :, 0]
-    # masked_image = mask * image_foreground + (1 - mask) * image_background
-    # masked_image = mask * image_foreground
 
-    # randomly transform the mask
-    # rotate_degree = np.random.random() * 3.14
-    # translation = [np.random.random() * H, np.random.random() * W]
-    # tform = skimage_transform.SimilarityTransform(scale=1, rotation=rotate_degree, translation=translation)
-
-    # visualization
-    # plt.imshow(masked_image / 255)
-    # plt.show(block=True)
     return mask
