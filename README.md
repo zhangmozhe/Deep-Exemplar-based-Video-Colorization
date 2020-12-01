@@ -36,7 +36,7 @@ Then, download the pretrained models from [this link](https://facevc.blob.core.w
 - `video_moredata_l1` under the `checkpoints` folder
 - `vgg19_conv.pth` and `vgg19_gray.pth` under the `data` folder
 
-## Data preparation
+## Data Preparation
 
 In order to colorize your own video, it requires to extract the video frames, and provide a reference image as an example.
 
@@ -68,7 +68,6 @@ Note that we use 216\*384 images for training, which has aspect ratio of 1:2. Du
 
 - [ ] Release the training code
 - [ ] Prepare the Colab Demo
-- [ ] Legacy photo restoration
 
 ## Citation
 
@@ -84,7 +83,9 @@ year={2019}
 }
 ```
 
-**NOTE**: If you are also interested in restoring the artifacts in the legacy photo, please check our recent work, [bringing old photo back to life](https://github.com/microsoft/Bringing-Old-Photos-Back-to-Life).
+## Old Photo Restoration :fire:
+
+If you are also interested in restoring the artifacts in the legacy photo, please check our recent work, [bringing old photo back to life](https://github.com/microsoft/Bringing-Old-Photos-Back-to-Life).
 
 ```
 @inproceedings{wan2020bringing,
