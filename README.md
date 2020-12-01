@@ -2,7 +2,7 @@
 
 <img src='assets/teaser.png'/>
 
-### [Paper](https://arxiv.org/abs/1906.09909) | [Pretrained Model](https://facevc.blob.core.windows.net/zhanbo/old_photo/colorization_checkpoint.zip) | [Youtube video](https://youtu.be/HXWR5h5vVYI)
+### [Paper](https://arxiv.org/abs/1906.09909) | [Pretrained Model](https://facevc.blob.core.windows.net/zhanbo/old_photo/colorization_checkpoint.zip) | [Youtube video](https://youtu.be/HXWR5h5vVYI) :fire:
 
 **Deep Exemplar-based Video Colorization, CVPR2019**
 
@@ -67,7 +67,7 @@ Note that we use 216\*384 images for training, which has aspect ratio of 1:2. Du
 ## TODO
 
 - [ ] Release the training code
-- [ ] Prepare the Colab Demo
+- [ ] Prepare the Colab demo
 
 ## Citation
 
