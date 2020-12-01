@@ -255,7 +255,6 @@ def save_frames(image, image_folder, index=None, image_name=None):
 def folder2vid(image_folder, output_dir, filename):
     images = [img for img in os.listdir(image_folder) if img.endswith(".jpg")]
     images.sort()
-    print(images)
     frame = cv2.imread(os.path.join(image_folder, images[0]))
     height, width, layers = frame.shape
     print("writing to video " + os.path.join(output_dir, filename))

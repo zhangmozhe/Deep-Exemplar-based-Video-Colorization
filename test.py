@@ -24,7 +24,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 torch.cuda.set_device(0)
 
 
-def colorize_video(opt, input_path, reference_path, output_path, nonlocal_net, colornet, vggnet):
+def colorize_video(opt, input_path, reference_file, output_path, nonlocal_net, colornet, vggnet):
     # parameters for wls filter
     wls_filter_on = True
     lambda_value = 500
@@ -45,7 +45,7 @@ def colorize_video(opt, input_path, reference_path, output_path, nonlocal_net, c
 
     # if frame propagation: use the first frame as reference
     # otherwise, use the specified reference image
-    ref_name = input_path + filenames[0] if opt.frame_propagate else reference_path
+    ref_name = input_path + filenames[0] if opt.frame_propagate else reference_file
     print("reference name:", ref_name)
     frame_ref = Image.open(ref_name)
 
@@ -136,26 +136,21 @@ def colorize_video(opt, input_path, reference_path, output_path, nonlocal_net, c
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--frame_propagate", default=False, type=bool)
-    parser.add_argument("--image_size", type=int, default=[216 * 2, 384 * 2])
+    parser.add_argument(
+        "--frame_propagate", default=False, type=bool, help="propagation mode, , please check the paper"
+    )
+    parser.add_argument("--image_size", type=int, default=[216 * 2, 384 * 2], help="the image size, eg. [216,384]")
     parser.add_argument("--cuda", action="store_false")
     parser.add_argument("--gpu_ids", type=str, default="0", help="separate by comma")
-    parser.add_argument("--clips_path", type=str, default="legacy_videos/legacy_clips", help="path of input clips")
-    parser.add_argument(
-        "--ref_path", type=str, default="legacy_videos/legacy_clips_ref", help="path of refernce images"
-    )
-    parser.add_argument(
-        "--output_path", type=str, default="legacy_videos/legacy_clips_output", help="path of output clips"
-    )
+    parser.add_argument("--clip_path", type=str, default="./sample_videos/clips/v32", help="path of input clips")
+    parser.add_argument("--ref_path", type=str, default="./sample_videos/ref/v32", help="path of refernce images")
+    parser.add_argument("--output_path", type=str, default="./sample_videos/output", help="path of output clips")
     opt = parser.parse_args(args=[])
     opt.gpu_ids = [int(x) for x in opt.gpu_ids.split(",")]
     cudnn.benchmark = True
     print("running on GPU", opt.gpu_ids)
 
-    clips = os.listdir(opt.clips_path)
-    clips.sort()
-    clips.reverse()
-
+    clip_name = opt.clip_path.split("/")[-1]
     refs = os.listdir(opt.ref_path)
     refs.sort()
 
@@ -180,19 +175,17 @@ if __name__ == "__main__":
     colornet.cuda()
     vggnet.cuda()
 
-    for clip in clips:
-        clip_name = clip.split("_")[0]
-        for ref_name in refs:
-            try:
-                colorize_video(
-                    opt,
-                    os.path.join(opt.clips_path, clip),
-                    os.path.join(opt.ref_path, ref_name),
-                    os.path.join(opt.output_path, clip_name + "_" + ref_name.split(".")[0]),
-                    nonlocal_net,
-                    colornet,
-                    vggnet,
-                )
-            except Exception as error:
-                print("error when colorizing the video " + ref_name)
-                print(error)
+    for ref_name in refs:
+        try:
+            colorize_video(
+                opt,
+                opt.clip_path,
+                os.path.join(opt.ref_path, ref_name),
+                os.path.join(opt.output_path, clip_name + "_" + ref_name.split(".")[0]),
+                nonlocal_net,
+                colornet,
+                vggnet,
+            )
+        except Exception as error:
+            print("error when colorizing the video " + ref_name)
+            print(error)
