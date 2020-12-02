@@ -70,17 +70,14 @@ Note that we use 216\*384 images for training, which has aspect ratio of 1:2. Du
 
 <figure>
 <img src='assets/sample1.png'/>
-<figcaption>comparison with state-of-the-arts</figcaption>
 </figure>
 
 <figure>
-<img src='assets/sample2.png'/>
-<figcaption>More colorization results</figcaption>
+<img src='assets/sample2.png' style="zoom:60%"/>
 </figure>
 
 <figure>
-<img src='assets/sample3.png'/>
-<figcaption>More colorization results</figcaption>
+<img src='assets/sample3.png' style="zoom:60%"/>
 </figure>
 
 :star: Please check our [Youtube demo](https://youtu.be/HXWR5h5vVYI) for results of video colorization.
