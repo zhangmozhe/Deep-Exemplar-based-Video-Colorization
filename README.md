@@ -16,6 +16,8 @@
 <sup>1</sup>Hong Kong University of Science and Technology,<sup>2</sup>City University of Hong Kong,
 <sup>3</sup>Microsoft Research Asia, <sup>4</sup>Microsoft Cloud&AI, <sup>5</sup>USC Institute for Creative Technologies
 
+<!-- <img src='assets/sample1.png'/> -->
+
 ## Prerequisites
 
 - Python 3.6+
@@ -63,6 +65,14 @@ python test.py --clip_path ./sample_videos/clips/v32 \
 ```
 
 Note that we use 216\*384 images for training, which has aspect ratio of 1:2. During inference, we scale the input to this size and then rescale the output back to the original size.
+
+## Colorization results
+
+<img src='assets/sample1.png'/>
+
+<img src='assets/sample2.png'/>
+
+<img src='assets/sample3.png'/>
 
 <!-- ## TODO
 
