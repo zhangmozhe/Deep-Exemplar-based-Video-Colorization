@@ -72,7 +72,7 @@ Note that we use 216\*384 images for training, which has aspect ratio of 1:2. Du
 <img src='assets/sample1.png'/>
 </figure>
 
-## More results
+## More Results
 <figure>
 <img src='assets/sample2.png' />
 </figure>
