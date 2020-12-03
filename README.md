@@ -66,7 +66,7 @@ python test.py --clip_path ./sample_videos/clips/v32 \
 
 Note that we use 216\*384 images for training, which has aspect ratio of 1:2. During inference, we scale the input to this size and then rescale the output back to the original size.
 
-## Comparison with State-of-the-Arts
+## Comparison with State-of-the-arts
 
 <figure>
 <img src='assets/sample1.png'/>
