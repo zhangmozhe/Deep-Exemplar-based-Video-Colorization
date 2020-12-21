@@ -66,6 +66,7 @@ python test.py --clip_path ./sample_videos/clips/v32 \
 
 Note that we use 216\*384 images for training, which has aspect ratio of 1:2. During inference, we scale the input to this size and then rescale the output back to the original size.
 
+<<<<<<< HEAD
 ## Train
 
 We also provide training code for reference. The training can be started by running:
@@ -79,13 +80,20 @@ python --data_root [root of video samples] \
 We do not provide the full video dataset due to the copyright issue. For image samples, we retrieve semantically similar images from ImageNet using [this repository](https://github.com/hmmlillian/Gray-Image-Retrieval). Still, one can refer to our code to understand the detailed procedure of augmenting the image dataset to mimic the video frames.
 
 ## Comparison with State-of-the-Arts
+=======
+## Comparison with State-of-the-arts
+>>>>>>> c90714cca0040f28a140d9f0043f05747056b82b
 
 <figure>
 <img src='assets/sample1.png'/>
 </figure>
 
+<<<<<<< HEAD
 ## More results
 
+=======
+## More Results
+>>>>>>> c90714cca0040f28a140d9f0043f05747056b82b
 <figure>
 <img src='assets/sample2.png' />
 </figure>
