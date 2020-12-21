@@ -189,13 +189,13 @@ class Self_Attn(nn.Module):
         return out
 
 
-class VGG19_feature_color_torchversion(nn.Module):
+class VGG19_pytorch(nn.Module):
     """
     NOTE: no need to pre-process the input; input tensor should range in [0,1]
     """
 
     def __init__(self, pool="max"):
-        super(VGG19_feature_color_torchversion, self).__init__()
+        super(VGG19_pytorch, self).__init__()
         self.conv1_1 = nn.Conv2d(3, 64, kernel_size=3, padding=1)
         self.conv1_2 = nn.Conv2d(64, 64, kernel_size=3, padding=1)
         self.conv2_1 = nn.Conv2d(64, 128, kernel_size=3, padding=1)

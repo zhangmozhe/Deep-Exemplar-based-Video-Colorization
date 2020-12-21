@@ -15,8 +15,9 @@ from PIL import Image
 import lib.TestTransforms as transforms
 from models.ColorVidNet import ColorVidNet
 from models.FrameColor import frame_colorization
-from models.NonlocalNet import VGG19_feature_color_torchversion, WarpNet
-from utils.util import batch_lab2rgb_transpose_mc, folder2vid, mkdir_if_not, save_frames, tensor_lab2rgb, uncenter_l
+from models.NonlocalNet import VGG19_pytorch, WarpNet
+from utils.util import (batch_lab2rgb_transpose_mc, folder2vid, mkdir_if_not,
+                        save_frames, tensor_lab2rgb, uncenter_l)
 from utils.util_distortion import CenterPad, Normalize, RGB2Lab, ToTensor
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
@@ -36,7 +37,7 @@ def colorize_video(opt, input_path, reference_file, output_path, nonlocal_net, c
     print("processing the folder:", input_path)
     path, dirs, filenames = os.walk(input_path).__next__()
     file_count = len(filenames)
-    filenames.sort()
+    filenames.sort(key=lambda f: int("".join(filter(str.isdigit, f) or -1)))
 
     # NOTE: resize frames to 216*384
     transform = transforms.Compose(
@@ -129,6 +130,7 @@ def colorize_video(opt, input_path, reference_file, output_path, nonlocal_net, c
 
         # save the frames
         save_frames(IA_predict_rgb, output_path, index)
+
     # output video
     video_name = "video.avi"
     folder2vid(image_folder=output_path, output_dir=output_path, filename=video_name)
@@ -145,7 +147,7 @@ if __name__ == "__main__":
     parser.add_argument("--clip_path", type=str, default="./sample_videos/clips/v32", help="path of input clips")
     parser.add_argument("--ref_path", type=str, default="./sample_videos/ref/v32", help="path of refernce images")
     parser.add_argument("--output_path", type=str, default="./sample_videos/output", help="path of output clips")
-    opt = parser.parse_args(args=[])
+    opt = parser.parse_args()
     opt.gpu_ids = [int(x) for x in opt.gpu_ids.split(",")]
     cudnn.benchmark = True
     print("running on GPU", opt.gpu_ids)
@@ -156,7 +158,7 @@ if __name__ == "__main__":
 
     nonlocal_net = WarpNet(1)
     colornet = ColorVidNet(7)
-    vggnet = VGG19_feature_color_torchversion()
+    vggnet = VGG19_pytorch()
     vggnet.load_state_dict(torch.load("data/vgg19_conv.pth"))
     for param in vggnet.parameters():
         param.requires_grad = False

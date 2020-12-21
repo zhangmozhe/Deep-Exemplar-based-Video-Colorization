@@ -1,0 +1,37 @@
+train.py 2020-12-21 15:03:17
+------------ Options -------------
+batch_size: 16
+beta1: 0.5
+checkpoint_dir: checkpoints/default
+contextual_loss_direction: forward
+data_root: /home/zhanbo/remote/video/video_pair3/
+data_root_imagenet: /home/zhanbo/remote/imagenet_ref_pair/
+domain_invariant: False
+epoch: 40
+gpu_ids: 0,1,2,3
+ic: 7
+image_size: [216, 384]
+load_pretrained_model: True
+lr: 1e-05
+lr_gamma: 0.1
+lr_step: 100
+luminance_noise: 2.0
+nonzero_placeholder_probability: 0.0
+permute_data: True
+print_step: 2
+real_reference_probability: 0.7
+resume: False
+resume_epoch: 0
+tb_log_step: 50
+weight_consistent: 0.02
+weight_contextual: 0.2
+weight_gan: 0.2
+weight_nonlocal_consistent: 0.0
+weight_nonlocal_smoothness: 0.0
+weight_perceptual: 0.001
+weight_smoothness: 5.0
+weigth_l1: 2.0
+with_bad: True
+with_mid: True
+workers: 8
+-------------- End ----------------

@@ -101,61 +101,13 @@ class Self_Attention(nn.Module):
         return out
 
 
-class Discriminator_WITHOUT_FC_x64_video(nn.Module):
+class Discriminator_x64(nn.Module):
     """
     Discriminative Network
     """
 
     def __init__(self, in_size=6, ndf=64):
-        super(Discriminator_WITHOUT_FC_x64_video, self).__init__()
-        self.in_size = in_size
-        self.ndf = ndf
-
-        self.layer1 = nn.Sequential(
-            # input size is in_size x 64 x 64
-            SpectralNorm(nn.Conv2d(self.in_size, self.ndf, 4, 2, 1)),
-            nn.LeakyReLU(0.2, inplace=True),
-        )
-        self.layer2 = nn.Sequential(
-            # state size: ndf x 32 x 32
-            SpectralNorm(nn.Conv2d(self.ndf, self.ndf * 2, 4, 2, 1)),
-            nn.InstanceNorm2d(self.ndf * 2),
-            nn.LeakyReLU(0.2, inplace=True),
-        )
-        self.layer3 = nn.Sequential(
-            # state size: (ndf * 2) x 16 x 16
-            SpectralNorm(nn.Conv2d(self.ndf * 2, self.ndf * 4, 4, 2, 1)),
-            nn.InstanceNorm2d(self.ndf * 4),
-            nn.LeakyReLU(0.2, inplace=True),
-        )
-        self.layer4 = nn.Sequential(
-            # state size: (ndf * 4) x 8 x 8
-            # Self_Attention(self.ndf * 4, 'relu'),
-            SpectralNorm(nn.Conv2d(self.ndf * 4, self.ndf * 8, 4, 2, 1)),
-            nn.InstanceNorm2d(self.ndf * 8),
-            nn.LeakyReLU(0.2, inplace=True),
-        )
-
-        self.last = SpectralNorm(nn.Conv2d(self.ndf * 8, 1, [3, 6], 1, 0))
-
-    def forward(self, input):
-        feature1 = self.layer1(input)
-        feature2 = self.layer2(feature1)
-        feature3 = self.layer3(feature2)
-        feature4 = self.layer4(feature3)
-        output = self.last(feature4)
-        output = F.avg_pool2d(output, output.size()[2:]).view(output.size()[0], -1)
-
-        return output, feature4
-
-
-class Discriminator_WITHOUT_FC_x64_video_BIG(nn.Module):
-    """
-    Discriminative Network
-    """
-
-    def __init__(self, in_size=6, ndf=64):
-        super(Discriminator_WITHOUT_FC_x64_video_BIG, self).__init__()
+        super(Discriminator_x64, self).__init__()
         self.in_size = in_size
         self.ndf = ndf
 
@@ -205,189 +157,237 @@ class Discriminator_WITHOUT_FC_x64_video_BIG(nn.Module):
         return output, feature4
 
 
-class Discriminator_WITHOUT_FC_x64(nn.Module):
-    """
-    Discriminative Network
-    """
+# class Discriminator_WITHOUT_FC_x64_video(nn.Module):
+#     """
+#     Discriminative Network
+#     """
 
-    def __init__(self, in_size=3, ndf=64):
-        super(Discriminator_WITHOUT_FC_x64, self).__init__()
-        self.in_size = in_size
-        self.ndf = ndf
+#     def __init__(self, in_size=6, ndf=64):
+#         super(Discriminator_WITHOUT_FC_x64_video, self).__init__()
+#         self.in_size = in_size
+#         self.ndf = ndf
 
-        self.main = nn.Sequential(
-            # input size is in_size x 64 x 64
-            SpectralNorm(nn.Conv2d(self.in_size, self.ndf, 4, 2, 1)),
-            nn.LeakyReLU(0.2, inplace=True),
-            # state size: ndf x 32 x 32
-            Self_Attention(self.ndf),
-            SpectralNorm(nn.Conv2d(self.ndf, self.ndf * 2, 4, 2, 1)),
-            nn.InstanceNorm2d(self.ndf * 2),
-            nn.LeakyReLU(0.2, inplace=True),
-            # state size: (ndf * 2) x 16 x 16
-            SpectralNorm(nn.Conv2d(self.ndf * 2, self.ndf * 4, 4, 2, 1)),
-            nn.InstanceNorm2d(self.ndf * 4),
-            nn.LeakyReLU(0.2, inplace=True),
-            # state size: (ndf * 4) x 8 x 8
-            SpectralNorm(nn.Conv2d(self.ndf * 4, self.ndf * 8, 4, 2, 1)),
-            nn.InstanceNorm2d(self.ndf * 8),
-            nn.LeakyReLU(0.2, inplace=True),
-            # sate size: (ndf * 8) x 4 x 4
-        )
+#         self.layer1 = nn.Sequential(
+#             # input size is in_size x 64 x 64
+#             SpectralNorm(nn.Conv2d(self.in_size, self.ndf, 4, 2, 1)),
+#             nn.LeakyReLU(0.2, inplace=True),
+#         )
+#         self.layer2 = nn.Sequential(
+#             # state size: ndf x 32 x 32
+#             SpectralNorm(nn.Conv2d(self.ndf, self.ndf * 2, 4, 2, 1)),
+#             nn.InstanceNorm2d(self.ndf * 2),
+#             nn.LeakyReLU(0.2, inplace=True),
+#         )
+#         self.layer3 = nn.Sequential(
+#             # state size: (ndf * 2) x 16 x 16
+#             SpectralNorm(nn.Conv2d(self.ndf * 2, self.ndf * 4, 4, 2, 1)),
+#             nn.InstanceNorm2d(self.ndf * 4),
+#             nn.LeakyReLU(0.2, inplace=True),
+#         )
+#         self.layer4 = nn.Sequential(
+#             # state size: (ndf * 4) x 8 x 8
+#             # Self_Attention(self.ndf * 4, 'relu'),
+#             SpectralNorm(nn.Conv2d(self.ndf * 4, self.ndf * 8, 4, 2, 1)),
+#             nn.InstanceNorm2d(self.ndf * 8),
+#             nn.LeakyReLU(0.2, inplace=True),
+#         )
 
-        self.last = SpectralNorm(nn.Conv2d(self.ndf * 8, 1, 4, 1, 0))
+#         self.last = SpectralNorm(nn.Conv2d(self.ndf * 8, 1, [3, 6], 1, 0))
 
-    def forward(self, input):
+#     def forward(self, input):
+#         feature1 = self.layer1(input)
+#         feature2 = self.layer2(feature1)
+#         feature3 = self.layer3(feature2)
+#         feature4 = self.layer4(feature3)
+#         output = self.last(feature4)
+#         output = F.avg_pool2d(output, output.size()[2:]).view(output.size()[0], -1)
 
-        feature = self.main(input)
-        output = self.last(feature)
-        output = F.avg_pool2d(output, output.size()[2:]).view(output.size()[0], -1)
-
-        return output, feature
-
-
-class Discriminator_WITHOUT_FC_x64_BIG(nn.Module):
-    """
-    Discriminative Network
-    """
-
-    def __init__(self, in_size=3, ndf=64):
-        super(Discriminator_WITHOUT_FC_x64_BIG, self).__init__()
-        self.in_size = in_size
-        self.ndf = ndf
-
-        self.main = nn.Sequential(
-            # 256 X 256
-            SpectralNorm(nn.Conv2d(self.in_size, self.ndf, 4, 2, 1)),
-            nn.LeakyReLU(0.2, inplace=True),
-            # 128 X 128
-            SpectralNorm(nn.Conv2d(self.ndf, self.ndf, 4, 2, 1)),
-            nn.InstanceNorm2d(self.ndf),
-            nn.LeakyReLU(0.2, inplace=True),
-            # 64 X 64
-            Self_Attention(self.ndf),
-            SpectralNorm(nn.Conv2d(self.ndf, self.ndf * 2, 4, 2, 1)),
-            nn.InstanceNorm2d(self.ndf * 2),
-            nn.LeakyReLU(0.2, inplace=True),
-            # 32 X 32
-            SpectralNorm(nn.Conv2d(self.ndf * 2, self.ndf * 4, 4, 2, 1)),
-            nn.InstanceNorm2d(self.ndf * 4),
-            nn.LeakyReLU(0.2, inplace=True),
-            # 16 X 16
-            SpectralNorm(nn.Conv2d(self.ndf * 4, self.ndf * 8, 4, 2, 1)),
-            nn.InstanceNorm2d(self.ndf * 8),
-            nn.LeakyReLU(0.2, inplace=True),
-            # 8 X 8
-            SpectralNorm(nn.Conv2d(self.ndf * 8, self.ndf * 16, 4, 2, 1)),
-            nn.InstanceNorm2d(self.ndf * 16),
-            nn.LeakyReLU(0.2, inplace=True),
-        )
-        # 4 X 4
-        self.last = SpectralNorm(nn.Conv2d(self.ndf * 16, 1, 4, 1, 0))
-
-    def forward(self, input):
-
-        feature = self.main(input)
-        output = self.last(feature)
-        output = F.avg_pool2d(output, output.size()[2:]).view(output.size()[0], -1)
-
-        return output, feature
+#         return output, feature4
 
 
-class Discriminator_WITHOUT_FC_x128(nn.Module):
-    """
-    Discriminative Network
-    """
+# class Discriminator_WITHOUT_FC_x64(nn.Module):
+#     """
+#     Discriminative Network
+#     """
 
-    def __init__(self, in_size=3, ndf=64):
-        super(Discriminator_WITHOUT_FC_x128, self).__init__()
-        self.in_size = in_size
-        self.ndf = ndf
+#     def __init__(self, in_size=3, ndf=64):
+#         super(Discriminator_WITHOUT_FC_x64, self).__init__()
+#         self.in_size = in_size
+#         self.ndf = ndf
 
-        self.main = nn.Sequential(
-            # input size is in_size x 128 x 128
-            SpectralNorm(nn.Conv2d(self.in_size, self.ndf, 4, 2, 1)),
-            nn.LeakyReLU(0.2, inplace=True),
-            # state size: ndf x 64 x 64
-            SpectralNorm(nn.Conv2d(self.ndf, self.ndf, 4, 2, 1)),
-            nn.InstanceNorm2d(self.ndf),
-            nn.LeakyReLU(0.2, inplace=True),
-            # state size: ndf x 32 x 32
-            SpectralNorm(nn.Conv2d(self.ndf, self.ndf * 2, 4, 2, 1)),
-            nn.InstanceNorm2d(self.ndf * 2),
-            nn.LeakyReLU(0.2, inplace=True),
-            # state size: (ndf * 24) x 16 x 16
-            SpectralNorm(nn.Conv2d(self.ndf * 2, self.ndf * 4, 4, 2, 1)),
-            nn.InstanceNorm2d(self.ndf * 4),
-            nn.LeakyReLU(0.2, inplace=True),
-            # sate size: (ndf * 4) x 8 x 8
-            SpectralNorm(nn.Conv2d(self.ndf * 4, self.ndf * 8, 4, 2, 1)),
-            nn.InstanceNorm2d(self.ndf * 8),
-            nn.LeakyReLU(0.2, inplace=True),
-            # sate size: (ndf * 8) x 4 x 4
-        )
+#         self.main = nn.Sequential(
+#             # input size is in_size x 64 x 64
+#             SpectralNorm(nn.Conv2d(self.in_size, self.ndf, 4, 2, 1)),
+#             nn.LeakyReLU(0.2, inplace=True),
+#             # state size: ndf x 32 x 32
+#             Self_Attention(self.ndf),
+#             SpectralNorm(nn.Conv2d(self.ndf, self.ndf * 2, 4, 2, 1)),
+#             nn.InstanceNorm2d(self.ndf * 2),
+#             nn.LeakyReLU(0.2, inplace=True),
+#             # state size: (ndf * 2) x 16 x 16
+#             SpectralNorm(nn.Conv2d(self.ndf * 2, self.ndf * 4, 4, 2, 1)),
+#             nn.InstanceNorm2d(self.ndf * 4),
+#             nn.LeakyReLU(0.2, inplace=True),
+#             # state size: (ndf * 4) x 8 x 8
+#             SpectralNorm(nn.Conv2d(self.ndf * 4, self.ndf * 8, 4, 2, 1)),
+#             nn.InstanceNorm2d(self.ndf * 8),
+#             nn.LeakyReLU(0.2, inplace=True),
+#             # sate size: (ndf * 8) x 4 x 4
+#         )
 
-        self.last = SpectralNorm(nn.Conv2d(self.ndf * 8, 1, 4, 1, 0))
+#         self.last = SpectralNorm(nn.Conv2d(self.ndf * 8, 1, 4, 1, 0))
 
-    def forward(self, input):
+#     def forward(self, input):
 
-        feature = self.main(input)
-        output = self.last(feature)
+#         feature = self.main(input)
+#         output = self.last(feature)
+#         output = F.avg_pool2d(output, output.size()[2:]).view(output.size()[0], -1)
 
-        return output, feature
+#         return output, feature
 
 
-class Discriminator_WITHOUT_FC_x256(nn.Module):
-    """
-    Discriminative Network
-    """
+# class Discriminator_WITHOUT_FC_x64_BIG(nn.Module):
+#     """
+#     Discriminative Network
+#     """
 
-    def __init__(self, in_size=3, ndf=64):
-        super(Discriminator_WITHOUT_FC_x256, self).__init__()
-        self.in_size = in_size
-        self.ndf = ndf
+#     def __init__(self, in_size=3, ndf=64):
+#         super(Discriminator_WITHOUT_FC_x64_BIG, self).__init__()
+#         self.in_size = in_size
+#         self.ndf = ndf
 
-        self.main = nn.Sequential(
-            # input size is in_size x 256 x 256
-            SpectralNorm(nn.Conv2d(self.in_size, self.ndf, 4, 2, 1)),
-            nn.LeakyReLU(0.2, inplace=True),
-            # state size: ndf x 128 x 128
-            SpectralNorm(nn.Conv2d(self.ndf, self.ndf, 4, 2, 1)),
-            nn.InstanceNorm2d(self.ndf),
-            nn.LeakyReLU(0.2, inplace=True),
-            # state size: ndf x 64 x 64
-            SpectralNorm(nn.Conv2d(self.ndf, self.ndf, 4, 2, 1)),
-            nn.InstanceNorm2d(self.ndf),
-            nn.LeakyReLU(0.2, inplace=True),
-            # state size: (ndf * 1) x 32 x 32
-            SpectralNorm(nn.Conv2d(self.ndf, self.ndf * 2, 4, 2, 1)),
-            nn.InstanceNorm2d(self.ndf * 2),
-            nn.LeakyReLU(0.2, inplace=True),
-            # state size: (ndf * 2) x 16 x 16
-            SpectralNorm(nn.Conv2d(self.ndf * 2, self.ndf * 4, 4, 2, 1)),
-            nn.InstanceNorm2d(self.ndf * 4),
-            nn.LeakyReLU(0.2, inplace=True),
-            # sate size: (ndf * 4) x 8 x 8
-            SpectralNorm(nn.Conv2d(self.ndf * 4, self.ndf * 8, 4, 2, 1)),
-            nn.InstanceNorm2d(self.ndf * 8),
-            nn.LeakyReLU(0.2, inplace=True),
-            # sate size: (ndf * 8) x 4 x 4
-        )
+#         self.main = nn.Sequential(
+#             # 256 X 256
+#             SpectralNorm(nn.Conv2d(self.in_size, self.ndf, 4, 2, 1)),
+#             nn.LeakyReLU(0.2, inplace=True),
+#             # 128 X 128
+#             SpectralNorm(nn.Conv2d(self.ndf, self.ndf, 4, 2, 1)),
+#             nn.InstanceNorm2d(self.ndf),
+#             nn.LeakyReLU(0.2, inplace=True),
+#             # 64 X 64
+#             Self_Attention(self.ndf),
+#             SpectralNorm(nn.Conv2d(self.ndf, self.ndf * 2, 4, 2, 1)),
+#             nn.InstanceNorm2d(self.ndf * 2),
+#             nn.LeakyReLU(0.2, inplace=True),
+#             # 32 X 32
+#             SpectralNorm(nn.Conv2d(self.ndf * 2, self.ndf * 4, 4, 2, 1)),
+#             nn.InstanceNorm2d(self.ndf * 4),
+#             nn.LeakyReLU(0.2, inplace=True),
+#             # 16 X 16
+#             SpectralNorm(nn.Conv2d(self.ndf * 4, self.ndf * 8, 4, 2, 1)),
+#             nn.InstanceNorm2d(self.ndf * 8),
+#             nn.LeakyReLU(0.2, inplace=True),
+#             # 8 X 8
+#             SpectralNorm(nn.Conv2d(self.ndf * 8, self.ndf * 16, 4, 2, 1)),
+#             nn.InstanceNorm2d(self.ndf * 16),
+#             nn.LeakyReLU(0.2, inplace=True),
+#         )
+#         # 4 X 4
+#         self.last = SpectralNorm(nn.Conv2d(self.ndf * 16, 1, 4, 1, 0))
 
-        self.last = SpectralNorm(nn.Conv2d(self.ndf * 8, 1, 4, 1, 0))
+#     def forward(self, input):
 
-    def forward(self, input):
+#         feature = self.main(input)
+#         output = self.last(feature)
+#         output = F.avg_pool2d(output, output.size()[2:]).view(output.size()[0], -1)
 
-        feature = self.main(input)
-        output = self.last(feature)
-
-        return output, feature
+#         return output, feature
 
 
-if __name__ == "__main__":
-    discriminator1 = Discriminator_WITHOUT_FC_x64()
-    discriminator2 = Discriminator_WITHOUT_FC_x128()
-    discriminator3 = Discriminator_WITHOUT_FC_x256()
-    print(discriminator1)
-    print(discriminator2)
-    print(discriminator3)
+# class Discriminator_WITHOUT_FC_x128(nn.Module):
+#     """
+#     Discriminative Network
+#     """
+
+#     def __init__(self, in_size=3, ndf=64):
+#         super(Discriminator_WITHOUT_FC_x128, self).__init__()
+#         self.in_size = in_size
+#         self.ndf = ndf
+
+#         self.main = nn.Sequential(
+#             # input size is in_size x 128 x 128
+#             SpectralNorm(nn.Conv2d(self.in_size, self.ndf, 4, 2, 1)),
+#             nn.LeakyReLU(0.2, inplace=True),
+#             # state size: ndf x 64 x 64
+#             SpectralNorm(nn.Conv2d(self.ndf, self.ndf, 4, 2, 1)),
+#             nn.InstanceNorm2d(self.ndf),
+#             nn.LeakyReLU(0.2, inplace=True),
+#             # state size: ndf x 32 x 32
+#             SpectralNorm(nn.Conv2d(self.ndf, self.ndf * 2, 4, 2, 1)),
+#             nn.InstanceNorm2d(self.ndf * 2),
+#             nn.LeakyReLU(0.2, inplace=True),
+#             # state size: (ndf * 24) x 16 x 16
+#             SpectralNorm(nn.Conv2d(self.ndf * 2, self.ndf * 4, 4, 2, 1)),
+#             nn.InstanceNorm2d(self.ndf * 4),
+#             nn.LeakyReLU(0.2, inplace=True),
+#             # sate size: (ndf * 4) x 8 x 8
+#             SpectralNorm(nn.Conv2d(self.ndf * 4, self.ndf * 8, 4, 2, 1)),
+#             nn.InstanceNorm2d(self.ndf * 8),
+#             nn.LeakyReLU(0.2, inplace=True),
+#             # sate size: (ndf * 8) x 4 x 4
+#         )
+
+#         self.last = SpectralNorm(nn.Conv2d(self.ndf * 8, 1, 4, 1, 0))
+
+#     def forward(self, input):
+
+#         feature = self.main(input)
+#         output = self.last(feature)
+
+#         return output, feature
+
+
+# class Discriminator_WITHOUT_FC_x256(nn.Module):
+#     """
+#     Discriminative Network
+#     """
+
+#     def __init__(self, in_size=3, ndf=64):
+#         super(Discriminator_WITHOUT_FC_x256, self).__init__()
+#         self.in_size = in_size
+#         self.ndf = ndf
+
+#         self.main = nn.Sequential(
+#             # input size is in_size x 256 x 256
+#             SpectralNorm(nn.Conv2d(self.in_size, self.ndf, 4, 2, 1)),
+#             nn.LeakyReLU(0.2, inplace=True),
+#             # state size: ndf x 128 x 128
+#             SpectralNorm(nn.Conv2d(self.ndf, self.ndf, 4, 2, 1)),
+#             nn.InstanceNorm2d(self.ndf),
+#             nn.LeakyReLU(0.2, inplace=True),
+#             # state size: ndf x 64 x 64
+#             SpectralNorm(nn.Conv2d(self.ndf, self.ndf, 4, 2, 1)),
+#             nn.InstanceNorm2d(self.ndf),
+#             nn.LeakyReLU(0.2, inplace=True),
+#             # state size: (ndf * 1) x 32 x 32
+#             SpectralNorm(nn.Conv2d(self.ndf, self.ndf * 2, 4, 2, 1)),
+#             nn.InstanceNorm2d(self.ndf * 2),
+#             nn.LeakyReLU(0.2, inplace=True),
+#             # state size: (ndf * 2) x 16 x 16
+#             SpectralNorm(nn.Conv2d(self.ndf * 2, self.ndf * 4, 4, 2, 1)),
+#             nn.InstanceNorm2d(self.ndf * 4),
+#             nn.LeakyReLU(0.2, inplace=True),
+#             # sate size: (ndf * 4) x 8 x 8
+#             SpectralNorm(nn.Conv2d(self.ndf * 4, self.ndf * 8, 4, 2, 1)),
+#             nn.InstanceNorm2d(self.ndf * 8),
+#             nn.LeakyReLU(0.2, inplace=True),
+#             # sate size: (ndf * 8) x 4 x 4
+#         )
+
+#         self.last = SpectralNorm(nn.Conv2d(self.ndf * 8, 1, 4, 1, 0))
+
+#     def forward(self, input):
+
+#         feature = self.main(input)
+#         output = self.last(feature)
+
+#         return output, feature
+
+
+# if __name__ == "__main__":
+#     discriminator1 = Discriminator_WITHOUT_FC_x64()
+#     discriminator2 = Discriminator_WITHOUT_FC_x128()
+#     discriminator3 = Discriminator_WITHOUT_FC_x256()
+#     print(discriminator1)
+#     print(discriminator2)
+#     print(discriminator3)
