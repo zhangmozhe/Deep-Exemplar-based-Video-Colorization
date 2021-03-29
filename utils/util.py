@@ -253,7 +253,7 @@ def save_frames(image, image_folder, index=None, image_name=None):
 
 
 def folder2vid(image_folder, output_dir, filename):
-    images = [img for img in os.listdir(image_folder) if img.endswith(".jpg")]
+    images = [img for img in os.listdir(image_folder) if img.endswith(".jpg") or img.endswith(".png")]
     images.sort()
     frame = cv2.imread(os.path.join(image_folder, images[0]))
     height, width, layers = frame.shape
