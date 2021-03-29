@@ -11,6 +11,7 @@ import torch
 import torch.backends.cudnn as cudnn
 import torchvision.transforms as transform_lib
 from PIL import Image
+from tqdm import tqdm
 
 import lib.TestTransforms as transforms
 from models.ColorVidNet import ColorVidNet
@@ -52,13 +53,9 @@ def colorize_video(opt, input_path, reference_file, output_path, nonlocal_net, c
 
     total_time = 0
     I_last_lab_predict = None
-
-    for iter_num, index in enumerate(range(file_count)):
-        frame_name = filenames[index]
-        print("input =", frame_name)
-        print("reference =", ref_name)
+    
+    for index, frame_name in enumerate(tqdm(filenames)):
         frame1 = Image.open(os.path.join(input_path, frame_name))
-
         IA_lab_large = transform(frame1).unsqueeze(0).cuda()
         IB_lab_large = transform(frame_ref).unsqueeze(0).cuda()
         IA_lab = torch.nn.functional.interpolate(IA_lab_large, scale_factor=0.5, mode="bilinear")
@@ -82,8 +79,8 @@ def colorize_video(opt, input_path, reference_file, output_path, nonlocal_net, c
             I_reference_ab = I_reference_lab[:, 1:3, :, :]
             I_reference_rgb = tensor_lab2rgb(torch.cat((uncenter_l(I_reference_l), I_reference_ab), dim=1))
 
-            t_start = time.clock()
-            torch.cuda.synchronize()
+            # t_start = time.clock()
+            # torch.cuda.synchronize()
 
             features_B = vggnet(I_reference_rgb, ["r12", "r22", "r32", "r42", "r52"], preprocess=True)
             I_current_ab_predict, I_current_nonlocal_lab_predict, features_current_gray = frame_colorization(
@@ -100,12 +97,12 @@ def colorize_video(opt, input_path, reference_file, output_path, nonlocal_net, c
             I_last_lab_predict = torch.cat((IA_l, I_current_ab_predict), dim=1)
 
         # update timing
-        torch.cuda.synchronize()
-        delta_t = time.clock() - t_start
-        print("runtime:", delta_t)
-        if iter_num > 0:
-            total_time += delta_t
-            print("%.2g second" % (total_time / iter_num))
+        # torch.cuda.synchronize()
+        # delta_t = time.clock() - t_start
+        # print("runtime:", delta_t)
+        # if iter_num > 0:
+        #     total_time += delta_t
+        #     print("%.2g second" % (total_time / iter_num))
 
         # upsampling
         curr_bs_l = IA_lab_large[:, 0:1, :, :]
@@ -134,7 +131,7 @@ def colorize_video(opt, input_path, reference_file, output_path, nonlocal_net, c
     # output video
     video_name = "video.avi"
     folder2vid(image_folder=output_path, output_dir=output_path, filename=video_name)
-
+    print()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -191,3 +188,8 @@ if __name__ == "__main__":
         except Exception as error:
             print("error when colorizing the video " + ref_name)
             print(error)
+
+    video_name = "video.avi"
+    clip_output_path = os.path.join(opt.output_path, clip_name)
+    mkdir_if_not(clip_output_path)
+    folder2vid(image_folder=opt.clip_path, output_dir=clip_output_path, filename=video_name)
