@@ -53,18 +53,26 @@ def colorize_video(opt, input_path, reference_file, output_path, nonlocal_net, c
 
     total_time = 0
     I_last_lab_predict = None
-    
+
+    IB_lab_large = transform(frame_ref).unsqueeze(0).cuda()
+    IB_lab = torch.nn.functional.interpolate(IB_lab_large, scale_factor=0.5, mode="bilinear")
+    IB_l = IB_lab[:, 0:1, :, :]
+    IB_ab = IB_lab[:, 1:3, :, :]
+    with torch.no_grad():
+      I_reference_lab = IB_lab
+      I_reference_l = I_reference_lab[:, 0:1, :, :]
+      I_reference_ab = I_reference_lab[:, 1:3, :, :]
+      I_reference_rgb = tensor_lab2rgb(torch.cat((uncenter_l(I_reference_l), I_reference_ab), dim=1))
+      features_B = vggnet(I_reference_rgb, ["r12", "r22", "r32", "r42", "r52"], preprocess=True)
+
     for index, frame_name in enumerate(tqdm(filenames)):
         frame1 = Image.open(os.path.join(input_path, frame_name))
         IA_lab_large = transform(frame1).unsqueeze(0).cuda()
-        IB_lab_large = transform(frame_ref).unsqueeze(0).cuda()
         IA_lab = torch.nn.functional.interpolate(IA_lab_large, scale_factor=0.5, mode="bilinear")
-        IB_lab = torch.nn.functional.interpolate(IB_lab_large, scale_factor=0.5, mode="bilinear")
 
         IA_l = IA_lab[:, 0:1, :, :]
         IA_ab = IA_lab[:, 1:3, :, :]
-        IB_l = IB_lab[:, 0:1, :, :]
-        IB_ab = IB_lab[:, 1:3, :, :]
+        
         if I_last_lab_predict is None:
             if opt.frame_propagate:
                 I_last_lab_predict = IB_lab
@@ -74,15 +82,6 @@ def colorize_video(opt, input_path, reference_file, output_path, nonlocal_net, c
         # start the frame colorization
         with torch.no_grad():
             I_current_lab = IA_lab
-            I_reference_lab = IB_lab
-            I_reference_l = I_reference_lab[:, 0:1, :, :]
-            I_reference_ab = I_reference_lab[:, 1:3, :, :]
-            I_reference_rgb = tensor_lab2rgb(torch.cat((uncenter_l(I_reference_l), I_reference_ab), dim=1))
-
-            # t_start = time.clock()
-            # torch.cuda.synchronize()
-
-            features_B = vggnet(I_reference_rgb, ["r12", "r22", "r32", "r42", "r52"], preprocess=True)
             I_current_ab_predict, I_current_nonlocal_lab_predict, features_current_gray = frame_colorization(
                 I_current_lab,
                 I_reference_lab,
@@ -95,14 +94,6 @@ def colorize_video(opt, input_path, reference_file, output_path, nonlocal_net, c
                 temperature=1e-10,
             )
             I_last_lab_predict = torch.cat((IA_l, I_current_ab_predict), dim=1)
-
-        # update timing
-        # torch.cuda.synchronize()
-        # delta_t = time.clock() - t_start
-        # print("runtime:", delta_t)
-        # if iter_num > 0:
-        #     total_time += delta_t
-        #     print("%.2g second" % (total_time / iter_num))
 
         # upsampling
         curr_bs_l = IA_lab_large[:, 0:1, :, :]
