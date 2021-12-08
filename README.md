@@ -71,7 +71,7 @@ Note that we use 216\*384 images for training, which has aspect ratio of 1:2. Du
 We also provide training code for reference. The training can be started by running:
 
 ```bash
-python --data_root [root of video samples] \
+python train.py --data_root [root of video samples] \
        --data_root_imagenet [root of image samples] \
        --gpu_ids [gpu ids] \
 ```
