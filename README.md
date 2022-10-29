@@ -33,7 +33,7 @@ source activate ColorVid
 pip install -r requirements.txt
 ```
 
-Then, download the pretrained models from [this link](https://facevc.blob.core.windows.net/zhanbo/old_photo/colorization_checkpoint.zip), unzip the file and place the files into the corresponding folders:
+Then, download the pretrained models from [this link](https://github.com/zhangmozhe/Deep-Exemplar-based-Video-Colorization/releases/download/v1.0/colorization_checkpoint.zip), unzip the file and place the files into the corresponding folders:
 
 - `video_moredata_l1` under the `checkpoints` folder
 - `vgg19_conv.pth` and `vgg19_gray.pth` under the `data` folder
